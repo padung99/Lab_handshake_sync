@@ -1,112 +1,100 @@
 module handshake_sync #(
-  parameter DWIDTH             = 16,
-  parameter AWIDTH             = 8
+   parameter DATA_W = 16 
 ) (
-  input  logic              clk_rd_i,
-  input  logic              clk_wr_i,
-  input  logic              srst_r_i,
-  input  logic              srst_w_i,
-  input  logic [DWIDTH-1:0] data_i,
+  input  logic              clk_a_i,
+  input  logic              clk_b_i,
 
-  input  logic              wrreq_i,
-  input  logic              rdreq_i,
-  output logic [DWIDTH-1:0] q_o,
-  output logic              empty_o,
-  output logic              full_o,
-  output logic [AWIDTH:0]   usedw_o,
+  input  logic              srst_a_i,
+  input  logic              srst_b_i,
 
-  output logic              almost_full_o,
-  output logic              almost_empty_o
+  input  logic [DATA_W-1:0] data_a_i,
+  input  logic              data_a_val_i,
+  output logic              data_a_ready_o,
+
+  output logic [DATA_W-1:0] data_b_o,
+  output logic              data_b_val_o
 );
 
-logic [AWIDTH:0] raddr;
-logic [AWIDTH:0] waddr;
+logic req;
+logic ack;
+logic b1_req;
+logic b2_req;
 
-logic [AWIDTH:0] next_raddr;
-logic [AWIDTH:0] next_waddr;
+logic a1_ack;
+logic a2_ack;
 
-logic            valid_rd;
-logic            valid_wr;
-
-logic            ack;
-logic            req;
-
-logic            wq1_ack;
-logic            wq2_ack;
-
-logic            rq1_req;
-logic            rq2_req;
-
-logic [DWIDTH-1:0] mem [2**AWIDTH-1:0];
-
-assign valid_rd = rq2_req && rdreq_i && !empty_o;
-assign valid_wr = wq2_ack && wrreq_i && !full_o;
-
-assign next_raddr = raddr + 1;
-assign next_waddr = waddr + 1;
-
-always_ff @( posedge clk_wr_i )
+always_ff @( posedge clk_a_i )
   begin
-    if( srst_w_i )
-      req <= 1;
+    if( srst_a_i )
+      data_a_ready_o <= 1'b1;
     else
       begin
-        if( wq2_ack )
-          req <= 1;
-        else if( rq2_req )
-          req <= 0;
-
-        { wq1_ack , wq2_ack } <= { ack, wq1_ack };
+        if( data_a_val_i )
+          data_a_ready_o <= 1'b0;
       end
   end
 
-always_ff @( posedge clk_rd_i )
+always_ff @( posedge clk_a_i )
   begin
-    if( srst_r_i )
-      ack <= 0;
-    else
-      begin
-        if( rq2_req )
-          ack <= 1;
-        else if( wq2_ack )
-          ack <= 0;
+    if( data_a_val_i )
+      req <= 1'b1;
+  end
 
-        { rq1_req , rq2_req } <= { req, rq1_req };
+always_ff @( posedge clk_a_i )
+  begin
+    if( srst_a_i )
+      { a1_ack, a2_ack } <= 0;
+    else
+      { a1_ack, a2_ack } <= { ack, a1_ack };
+  end
+
+always_ff @( posedge clk_a_i )
+  begin
+    if( a2_ack )
+      begin
+        // req <= 1'b0;
+        ack          <= 1'b0;
+        if( a1_ack == 1'b0 )
+          data_a_ready_o <= 1'b1;
       end
   end
 
-always_ff @( posedge clk_rd_i )
+always_ff @( posedge clk_b_i )
   begin
-    if( srst_r_i )
-        raddr <= 0;
+    if( srst_b_i )
+      { b1_req, b2_req } <= 0;
     else
-      if( valid_rd )
-        raddr <= next_raddr;
+      { b1_req, b2_req } <= { req, b1_req };
   end
 
-always_ff @( posedge clk_wr_i )
+always_ff @( posedge clk_b_i )
   begin
-    if( srst_w_i )
-        waddr <= 0;
+    if( b2_req )
+      begin
+        data_b_o     <= data_a_i;
+        // ack          <= 1'b0;
+        req <= 1'b0;
+      end
+  end
+
+always_ff @( posedge clk_b_i )
+  begin
+    if( data_b_val_o )
+      ack <= 1'b1;
+  end
+
+always_ff @( posedge clk_b_i )
+  begin
+    if( srst_b_i )
+      data_b_val_o <= 1'b0;
     else
-      if( valid_wr )
-        waddr <= next_waddr;
+      begin
+        if( data_b_val_o )
+          data_b_val_o <= 1'b0;
+        if( b2_req )
+          data_b_val_o <= req && b1_req && b2_req;
+      end
+        
   end
-
-always_ff @( posedge clk_wr_i )
-  begin
-    if( valid_wr )
-      mem[waddr[AWIDTH-1:0]] <= data_i;
-  end
-
-always_ff @( posedge clk_rd_i )
-  begin
-    if( valid_rd )
-      q_o <= mem[raddr[AWIDTH-1:0]];
-  end
-
-assign empty_o = ( raddr == waddr );
-assign full_o  = ( raddr[AWIDTH] != waddr[AWIDTH] ) &&
-                 ( raddr[AWIDTH-1:0] == waddr[AWIDTH-1:0] );
 
 endmodule

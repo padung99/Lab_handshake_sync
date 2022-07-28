@@ -19,7 +19,7 @@ vsim $fbasename
 
 add log -r /*
 add wave -r *
-add wave "sim:/handshake_sync_tb/dut1/mem"
+#add wave "sim:/handshake_sync_tb/dut1/mem"
 #add wave -group dut1 /fifo_dc_tb/dut1/*
 #add wave -group dut2 /fifo_dc_tb/dut2/*
 
