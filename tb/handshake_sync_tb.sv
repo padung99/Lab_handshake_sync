@@ -21,11 +21,11 @@ bit send_done;
 
 initial
   forever
-    #16 clk_a_i_tb = !clk_a_i_tb;
+    #7 clk_a_i_tb = !clk_a_i_tb;
 
 initial
   forever
-    #7 clk_b_i_tb = !clk_b_i_tb;
+    #16 clk_b_i_tb = !clk_b_i_tb;
 
 default clocking cb
   @ (posedge clk_a_i_tb);

@@ -30,7 +30,7 @@ always_ff @( posedge clk_a_i )
       data_a_ready_o <= 1'b1;
     else
       begin
-        if( data_a_val_i )
+        if( data_a_val_i == 1'b1 )
           data_a_ready_o <= 1'b0;
         if( a2_ack == 1'b1 && a1_ack == 1'b0 )
           data_a_ready_o <= 1'b1;
@@ -41,7 +41,7 @@ always_ff @( posedge clk_a_i )
   begin
     if( data_a_val_i )
       req <= 1'b1;
-    if( b2_req )
+    if( b2_req == 1'b1 )
       req <= 1'b0;
   end
 
@@ -72,7 +72,7 @@ always_ff @( posedge clk_b_i )
   begin
     if( data_b_val_o == 1'b1 )
       ack <= 1'b1;
-    if( a2_ack )
+    if( a2_ack == 1'b1 )
       ack <= 1'b0;
   end
 
