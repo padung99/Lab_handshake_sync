@@ -23,6 +23,7 @@ logic b2_req;
 logic a1_ack;
 logic a2_ack;
 
+///////////clkA/////////////////
 always_ff @( posedge clk_a_i )
   begin
     if( srst_a_i )
@@ -31,6 +32,8 @@ always_ff @( posedge clk_a_i )
       begin
         if( data_a_val_i )
           data_a_ready_o <= 1'b0;
+        if( a2_ack == 1'b1 && a1_ack == 1'b0 )
+          data_a_ready_o <= 1'b1;
       end
   end
 
@@ -38,6 +41,11 @@ always_ff @( posedge clk_a_i )
   begin
     if( data_a_val_i )
       req <= 1'b1;
+    if( b2_req )
+      begin
+        // data_b_o     <= data_a_i;
+        req <= 1'b0;
+      end
   end
 
 always_ff @( posedge clk_a_i )
@@ -48,17 +56,17 @@ always_ff @( posedge clk_a_i )
       { a1_ack, a2_ack } <= { ack, a1_ack };
   end
 
-always_ff @( posedge clk_a_i )
-  begin
-    if( a2_ack )
-      begin
-        // req <= 1'b0;
-        ack          <= 1'b0;
-        if( a1_ack == 1'b0 )
-          data_a_ready_o <= 1'b1;
-      end
-  end
+// always_ff @( posedge clk_a_i )
+//   begin
+//     if( a2_ack )
+//       begin
+//         ack          <= 1'b0;
+//         // if( a1_ack == 1'b0 )
+//         //   data_a_ready_o <= 1'b1;
+//       end
+//   end
 
+///////////clkB/////////////////
 always_ff @( posedge clk_b_i )
   begin
     if( srst_b_i )
@@ -72,8 +80,7 @@ always_ff @( posedge clk_b_i )
     if( b2_req )
       begin
         data_b_o     <= data_a_i;
-        // ack          <= 1'b0;
-        req <= 1'b0;
+        // req <= 1'b0;
       end
   end
 
@@ -81,6 +88,12 @@ always_ff @( posedge clk_b_i )
   begin
     if( data_b_val_o )
       ack <= 1'b1;
+    if( a2_ack )
+      begin
+        ack          <= 1'b0;
+        // if( a1_ack == 1'b0 )
+        //   data_a_ready_o <= 1'b1;
+      end
   end
 
 always_ff @( posedge clk_b_i )
@@ -91,8 +104,10 @@ always_ff @( posedge clk_b_i )
       begin
         if( data_b_val_o )
           data_b_val_o <= 1'b0;
-        if( b2_req )
-          data_b_val_o <= req && b1_req && b2_req;
+        if( b2_req && b1_req && !data_b_val_o )
+          data_b_val_o <= 1'b1;
+        // else if( b2_req && !b1_req )
+        //   data_b_val_o <= 1'b0;
       end
         
   end
