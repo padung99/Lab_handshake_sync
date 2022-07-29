@@ -42,58 +42,38 @@ always_ff @( posedge clk_a_i )
     if( data_a_val_i )
       req <= 1'b1;
     if( b2_req )
-      begin
-        // data_b_o     <= data_a_i;
-        req <= 1'b0;
-      end
+      req <= 1'b0;
   end
 
 always_ff @( posedge clk_a_i )
   begin
     if( srst_a_i )
-      { a1_ack, a2_ack } <= 0;
+      { a1_ack, a2_ack } <= 1'b0;
     else
       { a1_ack, a2_ack } <= { ack, a1_ack };
   end
-
-// always_ff @( posedge clk_a_i )
-//   begin
-//     if( a2_ack )
-//       begin
-//         ack          <= 1'b0;
-//         // if( a1_ack == 1'b0 )
-//         //   data_a_ready_o <= 1'b1;
-//       end
-//   end
 
 ///////////clkB/////////////////
 always_ff @( posedge clk_b_i )
   begin
     if( srst_b_i )
-      { b1_req, b2_req } <= 0;
+      { b1_req, b2_req } <= 1'b0;
     else
       { b1_req, b2_req } <= { req, b1_req };
   end
 
 always_ff @( posedge clk_b_i )
   begin
-    if( b2_req )
-      begin
-        data_b_o     <= data_a_i;
-        // req <= 1'b0;
-      end
+    if( b2_req == 1'b1 )
+      data_b_o <= data_a_i;
   end
 
 always_ff @( posedge clk_b_i )
   begin
-    if( data_b_val_o )
+    if( data_b_val_o == 1'b1 )
       ack <= 1'b1;
     if( a2_ack )
-      begin
-        ack          <= 1'b0;
-        // if( a1_ack == 1'b0 )
-        //   data_a_ready_o <= 1'b1;
-      end
+      ack <= 1'b0;
   end
 
 always_ff @( posedge clk_b_i )
@@ -102,12 +82,10 @@ always_ff @( posedge clk_b_i )
       data_b_val_o <= 1'b0;
     else
       begin
-        if( data_b_val_o )
+        if( data_b_val_o == 1'b1 )
           data_b_val_o <= 1'b0;
         if( b2_req && b1_req && !data_b_val_o )
           data_b_val_o <= 1'b1;
-        // else if( b2_req && !b1_req )
-        //   data_b_val_o <= 1'b0;
       end
         
   end

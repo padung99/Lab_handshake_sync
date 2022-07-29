@@ -4,11 +4,11 @@ parameter AWIDTH_TB             = 4;
 
 parameter MAX_DATA              = 100;
 
-bit               clk_a_i_tb;
-bit               clk_b_i_tb;
+bit                    clk_a_i_tb;
+bit                    clk_b_i_tb;
 
-logic               srst_a_i_tb;
-logic               srst_b_i_tb;
+logic                  srst_a_i_tb;
+logic                  srst_b_i_tb;
 
 logic  [DATA_W_TB-1:0] data_a_i_tb;
 logic                  data_a_val_i_tb;
